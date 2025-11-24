@@ -16,10 +16,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+// If using Sonner:
+import { toast } from "sonner";
 
 interface Staff {
   id: number;
@@ -30,7 +32,11 @@ interface Staff {
 export default function Page() {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState<{ id: number | null; name: string; role: string }>({ id: null, name: "", role: "" });
+  const [form, setForm] = useState<{ id: number | null; name: string; role: string }>({
+    id: null,
+    name: "",
+    role: "",
+  });
   const [open, setOpen] = useState(false);
 
   async function fetchStaff() {
@@ -47,18 +53,33 @@ export default function Page() {
 
   async function saveStaff() {
     const method = form.id ? "PUT" : "POST";
-    await fetch("/api/staff", {
+
+    const res = await fetch("/api/staff", {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
+
+    if (res.ok) {
+      toast.success(form.id ? "Staff updated successfully!" : "Staff added!");
+    } else {
+      toast.error("An error occurred while saving staff.");
+    }
+
     setOpen(false);
     setForm({ id: null, name: "", role: "" });
-    fetchStaff();
+    fetchStaff(); // refresh table
   }
 
-  async function deleteStaff(id) {
-    await fetch(`/api/staff?id=${id}`, { method: "DELETE" });
+  async function deleteStaff(id: number) {
+    const res = await fetch(`/api/staff?id=${id}`, { method: "DELETE" });
+
+    if (res.ok) {
+      toast.success("Staff deleted.");
+    } else {
+      toast.error("Failed to delete staff.");
+    }
+
     fetchStaff();
   }
 
@@ -124,6 +145,14 @@ export default function Page() {
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </div>
+
+            <div>
+              <Label>Role</Label>
+              <Input
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+              />
+            </div>
           </div>
 
           <DialogFooter>
@@ -134,31 +163,3 @@ export default function Page() {
     </div>
   );
 }
-
-// API Route Example (save in app/api/staff/route.ts)
-// import { neon } from "@neondatabase/serverless";
-// const sql = neon(process.env.DATABASE_URL);
-//
-// export async function GET() {
-//   const rows = await sql("SELECT * FROM staff ORDER BY id ASC");
-//   return Response.json(rows);
-// }
-//
-// export async function POST(req) {
-//   const { name, role } = await req.json();
-//   await sql("INSERT INTO staff (name, role) VALUES ($1, $2)", [name, role]);
-//   return Response.json({ success: true });
-// }
-//
-// export async function PUT(req) {
-//   const { id, name, role } = await req.json();
-//   await sql("UPDATE staff SET name=$1, role=$2 WHERE id=$3", [name, role, id]);
-//   return Response.json({ success: true });
-// }
-//
-// export async function DELETE(req) {
-//   const { searchParams } = new URL(req.url);
-//   const id = searchParams.get("id");
-//   await sql("DELETE FROM staff WHERE id=$1", [id]);
-//   return Response.json({ success: true });
-// }
