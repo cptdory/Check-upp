@@ -28,7 +28,7 @@ const data = {
     {
       name: "Check-Upp",
       logo: GalleryVerticalEnd,
-      plan: "Enterprise",
+      plan: "Adamson University",
     },
   ],
   navAdmin: [
